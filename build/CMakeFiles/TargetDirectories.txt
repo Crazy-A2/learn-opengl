@@ -1,0 +1,3 @@
+C:/Users/qwe45/Desktop/learn_opengl/build/CMakeFiles/learn_opengl.dir
+C:/Users/qwe45/Desktop/learn_opengl/build/CMakeFiles/ALL_BUILD.dir
+C:/Users/qwe45/Desktop/learn_opengl/build/CMakeFiles/ZERO_CHECK.dir
