@@ -10,9 +10,6 @@ set(CMAKE_CXX_STANDARD 20)
 # 将源码目录(src)赋值给变量 SOURCE_FILES
 aux_source_directory(src SOURCE_FILES)
 
-# 指定生成可执行文件 需要的源文件以空格分隔
-# add_executable(learn_opengl main.cpp second.cpp module.cppm module.cpp)
-
 # 指定生成可执行文件 使用变量
 add_executable(learn_opengl ${SOURCE_FILES})
 
