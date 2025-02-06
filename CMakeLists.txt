@@ -1,5 +1,5 @@
 # 指定构建项目所需的cmake最低版本
-cmake_minimum_required(VERSION 3.0)
+cmake_minimum_required(VERSION 3.10)
 
 # 指定项目名
 project(learn_opengl)
@@ -17,7 +17,13 @@ add_executable(learn_opengl ${SOURCE_FILES})
 set(EXECUTABLE_OUTPUT_PATH ${PROJECT_SOURCE_DIR}/bin)
 
 # 链接静态库
-target_link_libraries(learn_opengl ${PROJECT_SOURCE_DIR}/lib/glfw3.lib Opengl32.lib)
+if (CMAKE_HOST_SYSTEM_NAME MATCHES "Linux")
+    message("Current-OS-Linux!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!")
+    target_link_libraries(learn_opengl ${PROJECT_SOURCE_DIR}/lib/libglfw3.a libGL.so)
+elseif (CMAKE_HOST_SYSTEM_NAME MATCHES "Windows")
+    message("current platform: Windows")
+    target_link_libraries(learn_opengl ${PROJECT_SOURCE_DIR}/lib/glfw3.lib Opengl32.lib)
+endif ()
 
 # 添加 include 目录
 include_directories(${PROJECT_SOURCE_DIR}/include)
