@@ -1,3 +1,4 @@
+#include <GLEW/glew.h>
 #include <GLFW/glfw3.h>
 
 #include <stddef.h>
@@ -47,8 +48,52 @@ int main(void)
     // 为了在窗口中绘制，需要将 OpenGL 上下文设置为当前上下文
     glfwMakeContextCurrent(window);
 
+    // GLEW 是一个开源的 C/C++ 扩展库，用于管理 OpenGL 扩展
+    // 在使用任何 OpenGL 函数之前，必须初始化 GLEW
+    // GLEW 使用当前上下文，所以必须在创建窗口和设置当前上下文之后初始化 GLEW
+    if (glewInit() != GLEW_OK) {
+        printf("GLEW 初始化失败\n");
+        fprintf(stderr, "Error: %s\n", glewGetErrorString(glewInit()));
+        exit(EXIT_FAILURE);
+    }
+
+    // 打印 OpenGL 版本
+    printf("%s", glGetString(GL_VERSION));
+
     // 与其他窗口相关的回调一样，按键回调是按窗口设置的。
     glfwSetKeyCallback(window, key_callback);
+
+    // 为了绘制图形，需要创建一个顶点缓冲区对象（buffer）（字节数组）
+    // buffer 是一个内存缓冲区，通常位于显存中，用于存储顶点数据
+    // 通过将顶点数据存储在 buffer 中，可以更快地绘制它们，因为它们存储在 GPU 内存中
+    GLuint buffer;
+    // 1 表示创建一个缓冲区对象，缓冲区 ID 存储在 buffer 中
+    glGenBuffers(1, &buffer);
+
+    // 为了将数据绑定到缓冲区，需要将缓冲区绑定到 GL_ARRAY_BUFFER 目标
+    // 之后，所有对 GL_ARRAY_BUFFER 的操作都将应用于当前绑定的缓冲区
+    glBindBuffer(GL_ARRAY_BUFFER, buffer);
+
+    // 顶点数据
+    float positions[6] = {
+        -0.5f, -0.5f,
+        0.0f, 0.5f,
+        0.5f, -0.5f
+    };
+
+    // 为了将数据复制到缓冲区，需要调用 glBufferData 函数
+    // 第一个参数是目标，第二个参数是要复制的数据的大小（以字节为单位）
+    // 第三个参数是要复制的数据，第四个参数是如何使用这些数据
+    // GL_STATIC_DRAW 表示数据不会经常更改，GL_DYNAMIC_DRAW 表示数据会经常更改
+    // GL_STREAM_DRAW 表示数据每次使用时都会更改
+    glBufferData(GL_ARRAY_BUFFER, 6 * sizeof(float), positions, GL_STATIC_DRAW);
+
+    // 启用通用顶点属性数据的数组 参数 0 表示顶点属性的索引（第几个顶点属性）
+    glEnableVertexAttribArray(0);
+    // 定义通用顶点属性数据的数组
+    // 0 表示顶点属性的索引（第几个顶点属性），2 表示顶点属性占几个数组元素（项），GL_FLOAT 表示顶点属性的类型
+    // GL_FALSE 表示是否要标准化，2 * sizeof(float) 表示顶点之间间隔的字节数，0 表示指向实际属性的指针（顶点属性在顶点内的偏移量）
+    glVertexAttribPointer(0, 2, GL_FLOAT, GL_FALSE, 2 * sizeof(float), 0);
 
     // 交换间隔表示在交换缓冲区（通常称为 vsync）之前要等待的帧数。
     // 默认情况下，交换间隔为零，这意味着缓冲区交换将立即发生。
@@ -64,11 +109,16 @@ int main(void)
     // 请注意，窗口实际上并未关闭，因此您需要监控此标志并销毁窗口或向用户提供某种反馈。
     while (!glfwWindowShouldClose(window)) {
         // 渲染 OpenGL 内容
-        glBegin(GL_TRIANGLES);
-        glVertex2f(-0.5f, -0.5f);
-        glVertex2f(0.0f, 0.5f);
-        glVertex2f(0.5f, -0.5f);
-        glEnd();
+        // 渲染一个三角形
+        // glBegin(GL_TRIANGLES);
+        // glVertex2f(-0.5f, -0.5f);
+        // glVertex2f(0.0f, 0.5f);
+        // glVertex2f(0.5f, -0.5f);
+        // glEnd();
+
+        // 用 OpenGL 渲染一个三角形
+        // 参数 1 表示渲染的图元类型，参数 2 表示从顶点数组的第几个顶点开始渲染，参数 3 表示渲染多少个顶点
+        glDrawArrays(GL_TRIANGLES, 0, 3);
 
         // 默认情况下，GLFW 窗口使用双缓冲。这意味着每个窗口都有两个渲染缓冲区;前缓冲区和后缓冲区。
         // 前缓冲区是要显示的缓冲区，而后缓冲区是渲染到的缓冲区。
