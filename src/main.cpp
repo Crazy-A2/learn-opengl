@@ -4,6 +4,21 @@
 #include <stddef.h>
 #include <stdio.h>
 #include <stdlib.h>
+#include <string>
+
+using namespace std;
+
+static GLuint CompileShader(GLuint type, const string& source)
+{
+
+    GLuint id = glCreateShader(type);
+}
+
+static int CreateSharer(const string& vertexShader, const string& fragmentShader)
+{
+    GLuint program = glCreateProgram();
+    GLuint vs = CompileShader(GL_VERTEX_SHADER, vertexShader);
+}
 
 // 设置错误回调函数
 // 大多数事件都是通过回调报告的，无论是按下的键、移动的 GLFW 窗口还是发生的错误
