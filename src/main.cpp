@@ -8,13 +8,29 @@
 
 using namespace std;
 
-static GLuint CompileShader(GLuint type, const string& source)
+/**
+ * @brief 编译着色器
+ * 
+ * 着色器是一种小型程序，用于在 GPU 上运行。它们用于控制渲染管道的某些阶段
+ * @param type 着色器类型
+ * @param source 着色器源码
+ * @return 着色器 ID
+ */
+static inline GLuint CompileShader(GLuint type, const string& source)
 {
-
     GLuint id = glCreateShader(type);
+    const char* src = source.c_str();
+    glShaderSource(id, 1, &src, nullptr);
 }
 
-static int CreateSharer(const string& vertexShader, const string& fragmentShader)
+/**
+ * @brief 创建着色器程序
+ *
+ * @param vertexShader 顶点着色器
+ * @param fragmentShader 片段着色器
+ * @return 着色器程序 ID
+ */
+static inline int CreateSharer(const string& vertexShader, const string& fragmentShader)
 {
     GLuint program = glCreateProgram();
     GLuint vs = CompileShader(GL_VERTEX_SHADER, vertexShader);
@@ -23,15 +39,16 @@ static int CreateSharer(const string& vertexShader, const string& fragmentShader
 // 设置错误回调函数
 // 大多数事件都是通过回调报告的，无论是按下的键、移动的 GLFW 窗口还是发生的错误
 // 如果 GLFW 函数失败，则会向 GLFW 错误回调报错
-void error_callback(int error, const char* description)
+inline void error_callback(int error, const char* description)
 {
     fprintf(stderr, "Error: %s\n", description);
 }
 
 // 设置键盘回调函数
 // 每个窗口都有大量的回调，可以设置为接收所有各种类型的事件。
+// @param window 窗口句柄
 // 要接收 key press 和 release 事件，请创建一个 key callback 函数。
-static void key_callback(GLFWwindow* window, int key, int scancode, int action, int mods)
+static inline void key_callback(GLFWwindow* window, int key, int scancode, int action, int mods)
 {
     // 当按下 ESC 键时，关闭窗口
     if (key == GLFW_KEY_ESCAPE && action == GLFW_PRESS) {
