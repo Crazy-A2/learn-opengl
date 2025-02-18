@@ -6,21 +6,34 @@
 #include <stdlib.h>
 #include <string>
 
+#include <newtype.h>
+
 using namespace std;
 
 /**
  * @brief 编译着色器
- * 
+ *
  * 着色器是一种小型程序，用于在 GPU 上运行。它们用于控制渲染管道的某些阶段
  * @param type 着色器类型
  * @param source 着色器源码
  * @return 着色器 ID
  */
-static inline GLuint CompileShader(GLuint type, const string& source)
+static inline u32 CompileShader(u32 type, const string& source)
 {
-    GLuint id = glCreateShader(type);
+    u32 id = glCreateShader(type);
     const char* src = source.c_str();
     glShaderSource(id, 1, &src, nullptr);
+    glCompileShader(id);
+
+    i32 result;
+    glGetShaderiv(id, GL_COMPILE_STATUS, &result);
+    if (result == GL_FALSE) {
+        i32 length;
+        glGetShaderiv(id, GL_INFO_LOG_LENGTH, &length);
+        char message[length];
+    }
+
+    return id;
 }
 
 /**
@@ -30,16 +43,27 @@ static inline GLuint CompileShader(GLuint type, const string& source)
  * @param fragmentShader 片段着色器
  * @return 着色器程序 ID
  */
-static inline int CreateSharer(const string& vertexShader, const string& fragmentShader)
+static inline u32 CreateSharer(const string& vertexShader, const string& fragmentShader)
 {
-    GLuint program = glCreateProgram();
-    GLuint vs = CompileShader(GL_VERTEX_SHADER, vertexShader);
+    u32 program = glCreateProgram();
+    u32 vs = CompileShader(GL_VERTEX_SHADER, vertexShader);
+    u32 fs = CompileShader(GL_FRAGMENT_SHADER, fragmentShader);
+
+    glAttachShader(program, vs);
+    glAttachShader(program, fs);
+    glLinkProgram(program);
+    glValidateProgram(program);
+
+    glDeleteShader(vs);
+    glDeleteShader(fs);
+
+    return program;
 }
 
 // 设置错误回调函数
 // 大多数事件都是通过回调报告的，无论是按下的键、移动的 GLFW 窗口还是发生的错误
 // 如果 GLFW 函数失败，则会向 GLFW 错误回调报错
-inline void error_callback(int error, const char* description)
+inline void error_callback(i32 error, const char* description)
 {
     fprintf(stderr, "Error: %s\n", description);
 }
@@ -48,7 +72,7 @@ inline void error_callback(int error, const char* description)
 // 每个窗口都有大量的回调，可以设置为接收所有各种类型的事件。
 // @param window 窗口句柄
 // 要接收 key press 和 release 事件，请创建一个 key callback 函数。
-static inline void key_callback(GLFWwindow* window, int key, int scancode, int action, int mods)
+static inline void key_callback(GLFWwindow* window, i32 key, i32 scancode, i32 action, i32 mods)
 {
     // 当按下 ESC 键时，关闭窗口
     if (key == GLFW_KEY_ESCAPE && action == GLFW_PRESS) {
@@ -56,7 +80,7 @@ static inline void key_callback(GLFWwindow* window, int key, int scancode, int a
     }
 }
 
-int main(void)
+i32 main(void)
 {
     // 必须设置错误回调函数，以便 GLFW 知道要调用它们。
     // 用于设置错误回调的函数是少数几个可以在初始化之前调用的 GLFW 函数之一
@@ -98,7 +122,7 @@ int main(void)
     // 为了绘制图形，需要创建一个顶点缓冲区对象（buffer）（字节数组）
     // buffer 是一个内存缓冲区，通常位于显存中，用于存储顶点数据
     // 通过将顶点数据存储在 buffer 中，可以更快地绘制它们，因为它们存储在 GPU 内存中
-    GLuint buffer;
+    u32 buffer;
     // 1 表示创建一个缓冲区对象，缓冲区 ID 存储在 buffer 中
     glGenBuffers(1, &buffer);
 
@@ -107,7 +131,7 @@ int main(void)
     glBindBuffer(GL_ARRAY_BUFFER, buffer);
 
     // 顶点数据
-    float positions[6] = {
+    f32 positions[6] = {
         -0.5f, -0.5f,
         0.0f, 0.5f,
         0.5f, -0.5f
@@ -118,14 +142,14 @@ int main(void)
     // 第三个参数是要复制的数据，第四个参数是如何使用这些数据
     // GL_STATIC_DRAW 表示数据不会经常更改，GL_DYNAMIC_DRAW 表示数据会经常更改
     // GL_STREAM_DRAW 表示数据每次使用时都会更改
-    glBufferData(GL_ARRAY_BUFFER, 6 * sizeof(float), positions, GL_STATIC_DRAW);
+    glBufferData(GL_ARRAY_BUFFER, 6 * sizeof(f32), positions, GL_STATIC_DRAW);
 
     // 启用通用顶点属性数据的数组 参数 0 表示顶点属性的索引（第几个顶点属性）
     glEnableVertexAttribArray(0);
     // 定义通用顶点属性数据的数组
     // 0 表示顶点属性的索引（第几个顶点属性），2 表示顶点属性占几个数组元素（项），GL_FLOAT 表示顶点属性的类型
-    // GL_FALSE 表示是否要标准化，2 * sizeof(float) 表示顶点之间间隔的字节数，0 表示指向实际属性的指针（顶点属性在顶点内的偏移量）
-    glVertexAttribPointer(0, 2, GL_FLOAT, GL_FALSE, 2 * sizeof(float), 0);
+    // GL_FALSE 表示是否要标准化，2 * sizeof(f32) 表示顶点之间间隔的字节数，0 表示指向实际属性的指针（顶点属性在顶点内的偏移量）
+    glVertexAttribPointer(0, 2, GL_FLOAT, GL_FALSE, 2 * sizeof(f32), 0);
 
     // 交换间隔表示在交换缓冲区（通常称为 vsync）之前要等待的帧数。
     // 默认情况下，交换间隔为零，这意味着缓冲区交换将立即发生。
