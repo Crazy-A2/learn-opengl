@@ -6,7 +6,7 @@
 #include <stdlib.h>
 #include <string>
 
-#include <newtype.h>
+import newtype;
 
 using namespace std;
 
@@ -30,7 +30,13 @@ static inline u32 CompileShader(u32 type, const string& source)
     if (result == GL_FALSE) {
         i32 length;
         glGetShaderiv(id, GL_INFO_LOG_LENGTH, &length);
-        char message[length];
+        // 在栈上动态分配内存
+        // alloca 分配的内存在函数返回时会自动释放
+        char* message = (char*)alloca(length * sizeof(char));
+        glGetShaderInfoLog(id, length, &length, message);
+        printf("%s着色器编译失败: %s\n", type == GL_VERTEX_SHADER ? "顶点" : "片段", message);
+        glDeleteShader(id);
+        return 0;
     }
 
     return id;
@@ -114,7 +120,7 @@ i32 main(void)
     }
 
     // 打印 OpenGL 版本
-    printf("%s", glGetString(GL_VERSION));
+    printf("%s\n", glGetString(GL_VERSION));
 
     // 与其他窗口相关的回调一样，按键回调是按窗口设置的。
     glfwSetKeyCallback(window, key_callback);
@@ -160,6 +166,29 @@ i32 main(void)
     // 可以将其设置为更高的值，但通常不建议这样做，因为它会导致输入延迟。
     glfwSwapInterval(1);
 
+    string vertexShader = R"(
+        #version 330 core
+
+        layout(location = 0) in vec4 position;
+
+        void main()
+        {
+            gl_Position = position;
+        }
+    )";
+    string fragmentShader = R"(
+        #version 330 core
+
+        layout(location = 0) out vec4 color;
+
+        void main()
+        {
+            color = vec4(1.0, 0.0, 0.0, 1.0);
+        }
+    )";
+    u32 shader = CreateSharer(vertexShader, fragmentShader);
+    glUseProgram(shader);
+
     // 每个窗口都有一个标志，指示是否应关闭该窗口。
     // 当用户尝试通过按标题栏中的关闭小组件或使用 Alt+F4 等组合键来关闭窗口时，此标志将设置为 1。
     // 请注意，窗口实际上并未关闭，因此您需要监控此标志并销毁窗口或向用户提供某种反馈。
@@ -195,6 +224,8 @@ i32 main(void)
 
     // 当不再需要窗口和上下文时，将其销毁。
     glfwDestroyWindow(window);
+
+    glDeleteProgram(shader);
 
     // 使用 GLFW 后（通常在应用程序退出之前）, 需要终止 GLFW
     // 这将销毁所有剩余的窗口并释放 GLFW 分配的任何其他资源

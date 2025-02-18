@@ -1,5 +1,5 @@
 # 指定构建项目所需的cmake最低版本
-cmake_minimum_required(VERSION 3.10)
+cmake_minimum_required(VERSION 3.24)
 
 # 指定项目名
 project(learn_opengl)
