@@ -18,7 +18,7 @@ using namespace std;
  * @param source 着色器源码
  * @return 着色器 ID
  */
-static inline u32 CompileShader(u32 type, const string& source)
+static u32 CompileShader(u32 type, const string& source)
 {
     u32 id = glCreateShader(type);
     const char* src = source.c_str();
@@ -77,7 +77,6 @@ inline void error_callback(i32 error, const char* description)
 // 设置键盘回调函数
 // 每个窗口都有大量的回调，可以设置为接收所有各种类型的事件。
 // @param window 窗口句柄
-// 要接收 key press 和 release 事件，请创建一个 key callback 函数。
 static inline void key_callback(GLFWwindow* window, i32 key, i32 scancode, i32 action, i32 mods)
 {
     // 当按下 ESC 键时，关闭窗口
@@ -166,26 +165,26 @@ i32 main(void)
     // 可以将其设置为更高的值，但通常不建议这样做，因为它会导致输入延迟。
     glfwSwapInterval(1);
 
-    string vertexShader = R"(
-        #version 330 core
+    // string vertexShader = R"(
+    //     #version 330 core
 
-        layout(location = 0) in vec4 position;
+    //     layout(location = 0) in vec4 position;
 
-        void main()
-        {
-            gl_Position = position;
-        }
-    )";
-    string fragmentShader = R"(
-        #version 330 core
+    //     void main()
+    //     {
+    //         gl_Position = position;
+    //     }
+    // )";
+    // string fragmentShader = R"(
+    //     #version 330 core
 
-        layout(location = 0) out vec4 color;
+    //     layout(location = 0) out vec4 color;
 
-        void main()
-        {
-            color = vec4(1.0, 0.0, 0.0, 1.0);
-        }
-    )";
+    //     void main()
+    //     {
+    //         color = vec4(1.0, 0.0, 0.0, 1.0);
+    //     }
+    // )";
     u32 shader = CreateSharer(vertexShader, fragmentShader);
     glUseProgram(shader);
 
@@ -194,12 +193,6 @@ i32 main(void)
     // 请注意，窗口实际上并未关闭，因此您需要监控此标志并销毁窗口或向用户提供某种反馈。
     while (!glfwWindowShouldClose(window)) {
         // 渲染 OpenGL 内容
-        // 渲染一个三角形
-        // glBegin(GL_TRIANGLES);
-        // glVertex2f(-0.5f, -0.5f);
-        // glVertex2f(0.0f, 0.5f);
-        // glVertex2f(0.5f, -0.5f);
-        // glEnd();
 
         // 用 OpenGL 渲染一个三角形
         // 参数 1 表示渲染的图元类型，参数 2 表示从顶点数组的第几个顶点开始渲染，参数 3 表示渲染多少个顶点
