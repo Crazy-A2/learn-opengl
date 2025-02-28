@@ -6,14 +6,15 @@
 ## 如何构建？
 该项目使用流行的 **cmake** 构建，**lib** 目录下是相关依赖的二进制文件
 
-目前支持 **Windows**、**Linux** 平台
+目前仅支持 **Windows** 平台
 
 下面是为不熟悉 **cmake** 的朋友准备的从零开始的简单构建教程：
 
-1. 下载你操作系统支持的 **C++ 编译器工具链**（MSVC、LLVM 或 GCC）
+1. 下载 **C++ 编译工具链**（推荐 MSVC 或 LLVM）
 2. 下载 [**cmake**](http://https://cmake.org/download/)
 3. 下载 [**VSCode**](http://https://code.visualstudio.com/download)
 4. 在扩展里分别搜索 **cmake tools、Chinese** 并安装
+
 ![](/assets/1.png) ![](/assets/2.png)
 5. 点击左侧新出现的 **cmake** 图标
 6. 点击最上面的 **项目状态**

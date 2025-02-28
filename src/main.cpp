@@ -1,6 +1,10 @@
 #include <GLEW/glew.h>
 #include <GLFW/glfw3.h>
 
+#include <format>
+#include <fstream>
+#include <iostream>
+#include <sstream>
 #include <stddef.h>
 #include <stdio.h>
 #include <stdlib.h>
@@ -10,6 +14,50 @@ import newtype;
 
 using namespace std;
 
+struct ShaderProgramSource {
+    string vertexSource;
+    string fragmentSource;
+};
+
+/**
+ * @brief 读取 shader 文件并生成 ShaderProgramSource
+ *
+ * @param filePath shader 文件路径
+ * @return ShaderProgramSource 着色器源码
+ */
+static ShaderProgramSource parseShader(const string& filePath)
+{
+    enum class ShaderType {
+        NONE = -1,
+        VERTEX = 0,
+        FRAGMENT = 1
+    };
+
+    ifstream stream(filePath);
+    if (!stream.is_open()) {
+        cerr << "无法打开文件: " << filePath << endl;
+        return { "", "" };
+    }
+
+    string line;
+    stringstream ss[2];
+    ShaderType type = ShaderType::NONE;
+
+    while (getline(stream, line)) {
+        if (line.find("#shader") != string::npos) {
+            if (line.find("vertex") != string::npos) {
+                type = ShaderType::VERTEX;
+            } else if (line.find("fragment") != string::npos) {
+                type = ShaderType::FRAGMENT;
+            }
+        } else {
+            ss[(i32)type] << line << '\n';
+        }
+    }
+
+    return { ss[0].str(), ss[1].str() };
+}
+
 /**
  * @brief 编译着色器
  *
@@ -18,7 +66,7 @@ using namespace std;
  * @param source 着色器源码
  * @return 着色器 ID
  */
-static u32 CompileShader(u32 type, const string& source)
+static u32 compileShader(u32 type, const string& source)
 {
     u32 id = glCreateShader(type);
     const char* src = source.c_str();
@@ -49,11 +97,11 @@ static u32 CompileShader(u32 type, const string& source)
  * @param fragmentShader 片段着色器
  * @return 着色器程序 ID
  */
-static inline u32 CreateSharer(const string& vertexShader, const string& fragmentShader)
+static inline u32 createSharer(const string& vertexShader, const string& fragmentShader)
 {
     u32 program = glCreateProgram();
-    u32 vs = CompileShader(GL_VERTEX_SHADER, vertexShader);
-    u32 fs = CompileShader(GL_FRAGMENT_SHADER, fragmentShader);
+    u32 vs = compileShader(GL_VERTEX_SHADER, vertexShader);
+    u32 fs = compileShader(GL_FRAGMENT_SHADER, fragmentShader);
 
     glAttachShader(program, vs);
     glAttachShader(program, fs);
@@ -69,7 +117,7 @@ static inline u32 CreateSharer(const string& vertexShader, const string& fragmen
 // 设置错误回调函数
 // 大多数事件都是通过回调报告的，无论是按下的键、移动的 GLFW 窗口还是发生的错误
 // 如果 GLFW 函数失败，则会向 GLFW 错误回调报错
-inline void error_callback(i32 error, const char* description)
+inline void errorCallback(i32 error, const char* description)
 {
     fprintf(stderr, "Error: %s\n", description);
 }
@@ -77,7 +125,7 @@ inline void error_callback(i32 error, const char* description)
 // 设置键盘回调函数
 // 每个窗口都有大量的回调，可以设置为接收所有各种类型的事件。
 // @param window 窗口句柄
-static inline void key_callback(GLFWwindow* window, i32 key, i32 scancode, i32 action, i32 mods)
+static inline void keyCallback(GLFWwindow* window, i32 key, i32 scancode, i32 action, i32 mods)
 {
     // 当按下 ESC 键时，关闭窗口
     if (key == GLFW_KEY_ESCAPE && action == GLFW_PRESS) {
@@ -90,7 +138,7 @@ i32 main(void)
     // 必须设置错误回调函数，以便 GLFW 知道要调用它们。
     // 用于设置错误回调的函数是少数几个可以在初始化之前调用的 GLFW 函数之一
     // 它允许您在初始化期间和初始化后收到错误通知。
-    glfwSetErrorCallback(error_callback);
+    glfwSetErrorCallback(errorCallback);
 
     // 如果初始化失败，退出程序
     if (!glfwInit()) {
@@ -102,7 +150,6 @@ i32 main(void)
     GLFWwindow* window = glfwCreateWindow(640, 480, "这是窗口标题", NULL, NULL);
     if (!window) {
         printf("Window or OpenGL 上下文创建失败\n");
-        glfwTerminate();
         exit(EXIT_FAILURE);
     }
 
@@ -122,7 +169,7 @@ i32 main(void)
     printf("%s\n", glGetString(GL_VERSION));
 
     // 与其他窗口相关的回调一样，按键回调是按窗口设置的。
-    glfwSetKeyCallback(window, key_callback);
+    glfwSetKeyCallback(window, keyCallback);
 
     // 为了绘制图形，需要创建一个顶点缓冲区对象（buffer）（字节数组）
     // buffer 是一个内存缓冲区，通常位于显存中，用于存储顶点数据
@@ -165,27 +212,11 @@ i32 main(void)
     // 可以将其设置为更高的值，但通常不建议这样做，因为它会导致输入延迟。
     glfwSwapInterval(1);
 
-    // string vertexShader = R"(
-    //     #version 330 core
+    ShaderProgramSource source = parseShader(format("{}/src/triangle.shader", PROJECT_DIR));
+    printf("Vertex Shader:\n%s\n", source.vertexSource.c_str());
+    printf("Fragment Shader:\n%s\n", source.fragmentSource.c_str());
 
-    //     layout(location = 0) in vec4 position;
-
-    //     void main()
-    //     {
-    //         gl_Position = position;
-    //     }
-    // )";
-    // string fragmentShader = R"(
-    //     #version 330 core
-
-    //     layout(location = 0) out vec4 color;
-
-    //     void main()
-    //     {
-    //         color = vec4(1.0, 0.0, 0.0, 1.0);
-    //     }
-    // )";
-    u32 shader = CreateSharer(vertexShader, fragmentShader);
+    u32 shader = createSharer(source.vertexSource, source.fragmentSource);
     glUseProgram(shader);
 
     // 每个窗口都有一个标志，指示是否应关闭该窗口。

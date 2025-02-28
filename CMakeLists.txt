@@ -37,3 +37,5 @@ include_directories(${PROJECT_SOURCE_DIR}/include)
 
 # 添加 GLEW 静态链接需要的宏定义(-D宏名)
 add_definitions(-DGLEW_STATIC)
+# 定义指向项目根目录路径的宏
+add_definitions(-DPROJECT_DIR="${PROJECT_SOURCE_DIR}")
