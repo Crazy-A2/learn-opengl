@@ -171,6 +171,14 @@ i32 main(void)
     // 与其他窗口相关的回调一样，按键回调是按窗口设置的。
     glfwSetKeyCallback(window, keyCallback);
 
+    // 顶点数据
+    f32 positions[] {
+        -0.5f, -0.5f, // 索引 0
+        0.5f, -0.5f, //  索引 1
+        0.5f, 0.5f, //   索引 2
+        -0.5f, 0.5f //   索引 3
+    };
+
     // 为了绘制图形，需要创建一个顶点缓冲区对象（buffer）（字节数组）
     // buffer 是一个内存缓冲区，通常位于显存中，用于存储顶点数据
     // 通过将顶点数据存储在 buffer 中，可以更快地绘制它们，因为它们存储在 GPU 内存中
@@ -182,19 +190,12 @@ i32 main(void)
     // 之后，所有对 GL_ARRAY_BUFFER 的操作都将应用于当前绑定的缓冲区
     glBindBuffer(GL_ARRAY_BUFFER, buffer);
 
-    // 顶点数据
-    f32 positions[6] = {
-        -0.5f, -0.5f,
-        0.0f, 0.5f,
-        0.5f, -0.5f
-    };
-
     // 为了将数据复制到缓冲区，需要调用 glBufferData 函数
     // 第一个参数是目标，第二个参数是要复制的数据的大小（以字节为单位）
     // 第三个参数是要复制的数据，第四个参数是如何使用这些数据
     // GL_STATIC_DRAW 表示数据不会经常更改，GL_DYNAMIC_DRAW 表示数据会经常更改
     // GL_STREAM_DRAW 表示数据每次使用时都会更改
-    glBufferData(GL_ARRAY_BUFFER, 6 * sizeof(f32), positions, GL_STATIC_DRAW);
+    glBufferData(GL_ARRAY_BUFFER, 12 * sizeof(f32), positions, GL_STATIC_DRAW);
 
     // 启用通用顶点属性数据的数组 参数 0 表示顶点属性的索引（第几个顶点属性）
     glEnableVertexAttribArray(0);
@@ -202,6 +203,19 @@ i32 main(void)
     // 0 表示顶点属性的索引（第几个顶点属性），2 表示顶点属性占几个数组元素（项），GL_FLOAT 表示顶点属性的类型
     // GL_FALSE 表示是否要标准化，2 * sizeof(f32) 表示顶点之间间隔的字节数，0 表示指向实际属性的指针（顶点属性在顶点内的偏移量）
     glVertexAttribPointer(0, 2, GL_FLOAT, GL_FALSE, 2 * sizeof(f32), 0);
+
+    // 索引缓冲区
+    // 顶点缓冲区中的顶点是按顺序排列的，直接绘制所有顶点会浪费很多显存
+    // 在 3D 图形绘制顶点时可节省更多显存，节省程度取决于顶点数量
+    u32 indices[] {
+        0, 1, 2, // 第一个三角形
+        2, 3, 0 //  第二个三角形
+    };
+
+    u32 ibo;
+    glGenBuffers(1, &ibo);
+    glBindBuffer(GL_ELEMENT_ARRAY_BUFFER, ibo);
+    glBufferData(GL_ELEMENT_ARRAY_BUFFER, 6 * sizeof(u32), indices, GL_STATIC_DRAW);
 
     // 交换间隔表示在交换缓冲区（通常称为 vsync）之前要等待的帧数。
     // 默认情况下，交换间隔为零，这意味着缓冲区交换将立即发生。
@@ -227,7 +241,9 @@ i32 main(void)
 
         // 用 OpenGL 渲染一个三角形
         // 参数 1 表示渲染的图元类型，参数 2 表示从顶点数组的第几个顶点开始渲染，参数 3 表示渲染多少个顶点
-        glDrawArrays(GL_TRIANGLES, 0, 3);
+        // glDrawArrays(GL_TRIANGLES, 0, 6);
+        // 参数1 表示渲染的图元类型，参数2 表示索引缓冲区中的偏移量，参数3 表示渲染多少个顶点
+        glDrawElements(GL_TRIANGLES, 6, GL_UNSIGNED_INT, nullptr);
 
         // 默认情况下，GLFW 窗口使用双缓冲。这意味着每个窗口都有两个渲染缓冲区;前缓冲区和后缓冲区。
         // 前缓冲区是要显示的缓冲区，而后缓冲区是渲染到的缓冲区。
