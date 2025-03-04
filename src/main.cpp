@@ -14,7 +14,46 @@ import newtype;
 
 using namespace std;
 
-struct ShaderProgramSource {
+// 定义 MSVC 断言宏 捕捉到 false 时中断程序
+#define ASSERT(x)       \
+    if (!(x)) {         \
+        __debugbreak(); \
+    }
+
+// 定义宏 捕捉 OpenGL 错误并输出错误信息
+#define GLCall(x)   \
+    GLClearError(); \
+    x;              \
+    ASSERT(GLLogCall(#x, __FILE__, __LINE__)) // #x 会将 x 转换为字符串
+
+// 用于清除命令行中的错误信息
+static inline void GLClearError()
+{
+    // 从错误队列中循环读取错误，直到没有错误为止
+    // 用来清除错误队列中的所有错误
+    while (glGetError() != GL_NO_ERROR)
+        ;
+}
+
+/**
+ * @brief 用于打印 OpenGL 错误信息
+ *
+ * @param functionName 函数名
+ * @param fileName 文件名
+ * @param line 行号
+ * @return true 没有错误
+ * @return false 有错误
+ */
+static inline bool GLLogCall(const char* functionName, const char* fileName, u32 line)
+{
+    while (u32 error = glGetError()) {
+        printf("[OpenGL Error] (%d): 执行 %s 时报错，报错位置是 %s: 第%d行\n", error, functionName, fileName, line);
+        return false;
+    }
+    return true;
+}
+
+struct ShaderProgramSource final {
     string vertexSource;
     string fragmentSource;
 };
@@ -43,6 +82,7 @@ static ShaderProgramSource parseShader(const string& filePath)
     stringstream ss[2];
     ShaderType type = ShaderType::NONE;
 
+    // 结构化读取到的 shader 代码
     while (getline(stream, line)) {
         if (line.find("#shader") != string::npos) {
             if (line.find("vertex") != string::npos) {
@@ -243,7 +283,10 @@ i32 main(void)
         // 参数 1 表示渲染的图元类型，参数 2 表示从顶点数组的第几个顶点开始渲染，参数 3 表示渲染多少个顶点
         // glDrawArrays(GL_TRIANGLES, 0, 6);
         // 参数1 表示渲染的图元类型，参数2 表示索引缓冲区中的偏移量，参数3 表示渲染多少个顶点
-        glDrawElements(GL_TRIANGLES, 6, GL_UNSIGNED_INT, nullptr);
+        // glDrawElements(GL_TRIANGLES, 6, GL_UNSIGNED_INT, nullptr);
+
+        // 自定义宏在执行代码时捕捉 OpenGL 错误并在命令行输出错误信息
+        GLCall(glDrawElements(GL_TRIANGLES, 6, GL_INT, nullptr));
 
         // 默认情况下，GLFW 窗口使用双缓冲。这意味着每个窗口都有两个渲染缓冲区;前缓冲区和后缓冲区。
         // 前缓冲区是要显示的缓冲区，而后缓冲区是渲染到的缓冲区。
