@@ -108,22 +108,22 @@ static ShaderProgramSource parseShader(const string& filePath)
  */
 static u32 compileShader(u32 type, const string& source)
 {
-    u32 id = glCreateShader(type);
+    GLCall(u32 id = glCreateShader(type));
     const char* src = source.c_str();
-    glShaderSource(id, 1, &src, nullptr);
-    glCompileShader(id);
+    GLCall(glShaderSource(id, 1, &src, nullptr));
+    GLCall(glCompileShader(id));
 
     i32 result;
-    glGetShaderiv(id, GL_COMPILE_STATUS, &result);
+    GLCall(glGetShaderiv(id, GL_COMPILE_STATUS, &result));
     if (result == GL_FALSE) {
         i32 length;
-        glGetShaderiv(id, GL_INFO_LOG_LENGTH, &length);
+        GLCall(glGetShaderiv(id, GL_INFO_LOG_LENGTH, &length));
         // 在栈上动态分配内存
         // alloca 分配的内存在函数返回时会自动释放
         char* message = (char*)alloca(length * sizeof(char));
-        glGetShaderInfoLog(id, length, &length, message);
+        GLCall(glGetShaderInfoLog(id, length, &length, message));
         printf("%s着色器编译失败: %s\n", type == GL_VERTEX_SHADER ? "顶点" : "片段", message);
-        glDeleteShader(id);
+        GLCall(glDeleteShader(id));
         return 0;
     }
 
@@ -139,17 +139,17 @@ static u32 compileShader(u32 type, const string& source)
  */
 static inline u32 createSharer(const string& vertexShader, const string& fragmentShader)
 {
-    u32 program = glCreateProgram();
+    GLCall(u32 program = glCreateProgram());
     u32 vs = compileShader(GL_VERTEX_SHADER, vertexShader);
     u32 fs = compileShader(GL_FRAGMENT_SHADER, fragmentShader);
 
-    glAttachShader(program, vs);
-    glAttachShader(program, fs);
-    glLinkProgram(program);
-    glValidateProgram(program);
+    GLCall(glAttachShader(program, vs));
+    GLCall(glAttachShader(program, fs));
+    GLCall(glLinkProgram(program));
+    GLCall(glValidateProgram(program));
 
-    glDeleteShader(vs);
-    glDeleteShader(fs);
+    GLCall(glDeleteShader(vs));
+    GLCall(glDeleteShader(fs));
 
     return program;
 }
@@ -224,25 +224,25 @@ i32 main(void)
     // 通过将顶点数据存储在 buffer 中，可以更快地绘制它们，因为它们存储在 GPU 内存中
     u32 buffer;
     // 1 表示创建一个缓冲区对象，缓冲区 ID 存储在 buffer 中
-    glGenBuffers(1, &buffer);
+    GLCall(glGenBuffers(1, &buffer));
 
     // 为了将数据绑定到缓冲区，需要将缓冲区绑定到 GL_ARRAY_BUFFER 目标
     // 之后，所有对 GL_ARRAY_BUFFER 的操作都将应用于当前绑定的缓冲区
-    glBindBuffer(GL_ARRAY_BUFFER, buffer);
+    GLCall(glBindBuffer(GL_ARRAY_BUFFER, buffer));
 
     // 为了将数据复制到缓冲区，需要调用 glBufferData 函数
     // 第一个参数是目标，第二个参数是要复制的数据的大小（以字节为单位）
     // 第三个参数是要复制的数据，第四个参数是如何使用这些数据
     // GL_STATIC_DRAW 表示数据不会经常更改，GL_DYNAMIC_DRAW 表示数据会经常更改
     // GL_STREAM_DRAW 表示数据每次使用时都会更改
-    glBufferData(GL_ARRAY_BUFFER, 12 * sizeof(f32), positions, GL_STATIC_DRAW);
+    GLCall(glBufferData(GL_ARRAY_BUFFER, 12 * sizeof(f32), positions, GL_STATIC_DRAW));
 
     // 启用通用顶点属性数据的数组 参数 0 表示顶点属性的索引（第几个顶点属性）
-    glEnableVertexAttribArray(0);
+    GLCall(glEnableVertexAttribArray(0));
     // 定义通用顶点属性数据的数组
     // 0 表示顶点属性的索引（第几个顶点属性），2 表示顶点属性占几个数组元素（项），GL_FLOAT 表示顶点属性的类型
     // GL_FALSE 表示是否要标准化，2 * sizeof(f32) 表示顶点之间间隔的字节数，0 表示指向实际属性的指针（顶点属性在顶点内的偏移量）
-    glVertexAttribPointer(0, 2, GL_FLOAT, GL_FALSE, 2 * sizeof(f32), 0);
+    GLCall(glVertexAttribPointer(0, 2, GL_FLOAT, GL_FALSE, 2 * sizeof(f32), 0));
 
     // 索引缓冲区
     // 顶点缓冲区中的顶点是按顺序排列的，直接绘制所有顶点会浪费很多显存
@@ -253,9 +253,9 @@ i32 main(void)
     };
 
     u32 ibo;
-    glGenBuffers(1, &ibo);
-    glBindBuffer(GL_ELEMENT_ARRAY_BUFFER, ibo);
-    glBufferData(GL_ELEMENT_ARRAY_BUFFER, 6 * sizeof(u32), indices, GL_STATIC_DRAW);
+    GLCall(glGenBuffers(1, &ibo));
+    GLCall(glBindBuffer(GL_ELEMENT_ARRAY_BUFFER, ibo));
+    GLCall(glBufferData(GL_ELEMENT_ARRAY_BUFFER, 6 * sizeof(u32), indices, GL_STATIC_DRAW));
 
     // 交换间隔表示在交换缓冲区（通常称为 vsync）之前要等待的帧数。
     // 默认情况下，交换间隔为零，这意味着缓冲区交换将立即发生。
@@ -271,7 +271,7 @@ i32 main(void)
     printf("Fragment Shader:\n%s\n", source.fragmentSource.c_str());
 
     u32 shader = createSharer(source.vertexSource, source.fragmentSource);
-    glUseProgram(shader);
+    GLCall(glUseProgram(shader));
 
     // 每个窗口都有一个标志，指示是否应关闭该窗口。
     // 当用户尝试通过按标题栏中的关闭小组件或使用 Alt+F4 等组合键来关闭窗口时，此标志将设置为 1。
@@ -286,7 +286,7 @@ i32 main(void)
         // glDrawElements(GL_TRIANGLES, 6, GL_UNSIGNED_INT, nullptr);
 
         // 自定义宏在执行代码时捕捉 OpenGL 错误并在命令行输出错误信息
-        GLCall(glDrawElements(GL_TRIANGLES, 6, GL_INT, nullptr));
+        GLCall(glDrawElements(GL_TRIANGLES, 6, GL_UNSIGNED_INT, nullptr));
 
         // 默认情况下，GLFW 窗口使用双缓冲。这意味着每个窗口都有两个渲染缓冲区;前缓冲区和后缓冲区。
         // 前缓冲区是要显示的缓冲区，而后缓冲区是渲染到的缓冲区。
