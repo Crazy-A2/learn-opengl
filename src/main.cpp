@@ -273,11 +273,22 @@ i32 main(void)
     u32 shader = createSharer(source.vertexSource, source.fragmentSource);
     GLCall(glUseProgram(shader));
 
+    // 设置 uniform 变量
+    // glGetUniformLocation 函数返回 uniform 变量的位置值，如果返回 -1，则表示 uniform 变量不存在
+    GLCall(i32 location = glGetUniformLocation(shader, "u_Color"));
+    ASSERT(location != -1);
+    GLCall(glUniform4f(location, 0.2f, 0.3f, 0.8f, 1.0f));
+
+    f32 r = 0.0f;
+    f32 increment = 0.05f;
+
     // 每个窗口都有一个标志，指示是否应关闭该窗口。
     // 当用户尝试通过按标题栏中的关闭小组件或使用 Alt+F4 等组合键来关闭窗口时，此标志将设置为 1。
     // 请注意，窗口实际上并未关闭，因此您需要监控此标志并销毁窗口或向用户提供某种反馈。
     while (!glfwWindowShouldClose(window)) {
         // 渲染 OpenGL 内容
+
+        GLCall(glUniform4f(location, r, 0.3f, 0.8f, 1.0f));
 
         // 用 OpenGL 渲染一个三角形
         // 参数 1 表示渲染的图元类型，参数 2 表示从顶点数组的第几个顶点开始渲染，参数 3 表示渲染多少个顶点
@@ -287,6 +298,13 @@ i32 main(void)
 
         // 自定义宏在执行代码时捕捉 OpenGL 错误并在命令行输出错误信息
         GLCall(glDrawElements(GL_TRIANGLES, 6, GL_UNSIGNED_INT, nullptr));
+
+        if (r > 1.0f) {
+            increment = -0.05f;
+        } else if (r < 0.0f) {
+            increment = 0.05f;
+        }
+        r += increment;
 
         // 默认情况下，GLFW 窗口使用双缓冲。这意味着每个窗口都有两个渲染缓冲区;前缓冲区和后缓冲区。
         // 前缓冲区是要显示的缓冲区，而后缓冲区是渲染到的缓冲区。
